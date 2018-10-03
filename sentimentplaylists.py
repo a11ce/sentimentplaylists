@@ -18,12 +18,12 @@ sp = spotipy.Spotify(token)
 def main():
    
 
-    tracks = tracksInPlaylist()
+    tracks = tracksInPlaylist(SPOTIFY_USERNAME, SPOTIFY_CORPUS_PLAYLIST)
     print(namesOfTracks(tracks))
     
-def tracksInPlaylist():
-    #spotify only gives one at a time, thanks ackleyrc
-    batch = sp.user_playlist_tracks(SPOTIFY_USERNAME,SPOTIFY_CORPUS_PLAYLIST)
+def tracksInPlaylist(user,playlist):
+    #spotify only gives 100 at a time, thanks ackleyrc
+    batch = sp.user_playlist_tracks(user,playlist)
     tracks = batch['items']
     while batch['next']:
         batch = sp.next(batch)
