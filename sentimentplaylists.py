@@ -4,6 +4,7 @@ import os
 from bs4 import BeautifulSoup
 import requests
 from tqdm import tqdm
+from textblob import TextBlob 
 
 #this is me
 SPOTIFY_USERNAME = "oxa11ce"
@@ -12,7 +13,7 @@ SPOTIFY_USERNAME = "oxa11ce"
 #this a very large playlist (about 5k songs)
 #SPOTIFY_CORPUS_PLAYLIST = "spotify:user:oxa11ce:playlist:5mbCI94sPHLJssUO3t3fIf"
 #this is a much smaller playlist for faster testing
-SPOTIFY_CORPUS_PLAYLIST = "spotify:user:oxa11ce:playlist:0y9XBDHu7f3Jl39os6m7AS"
+SPOTIFY_CORPUS_PLAYLIST = "spotify:user:oxa11ce:playlist:5PBI12H84cg9KIMc4SKfn1"
 
 SPOTIFY_SCOPE= "playlist-read-private"
  # spotipy authorization
@@ -28,9 +29,10 @@ def main():
 
     tracks = tracksInPlaylist(SPOTIFY_USERNAME, SPOTIFY_CORPUS_PLAYLIST)
     print(namesOfTracks(tracks))
-    print(idsOfTracks(tracks))
-    print(lyricsOfTracks(tracks))
-    
+    #print(idsOfTracks(tracks))
+    polaritiesDict = trackNamesPolaritiesDict(tracks)
+    #print(polaritiesDict)
+    print(averagePolarity(polaritiesDict))
         
     
 def tracksInPlaylist(user,playlist):
@@ -90,6 +92,30 @@ def lyricsOfTrack(trackName,artistName):
         lyrics = html.find('div', class_='lyrics').get_text()
         
     return lyrics    
+
+def polarityOfLyrics(lyrics):
+    if(lyrics):
+        return TextBlob(lyrics).sentiment.polarity
+    else:
+        return None
+
+def trackNamesPolaritiesDict(tracks):
+    dictionary = {}
+    for track in tqdm(tracks):
+        dictionary = {**dictionary, **trackNamePolarityDict(track)}
+    return dictionary
+
+def trackNamePolarityDict(track):
+    return {nameOfTrack(track): polarityOfLyrics(lyricsOfTrack(nameOfTrack(track),artistOfTrack(track)))}        
+
+def averagePolarity(polarityDict):
+    count = 0
+    sum = 0
+    for key,value in polarityDict.items():
+        if(value):
+            count = count + 1
+            sum = sum + value
+    return sum/count        
 
 if __name__ == "__main__":
     main()
