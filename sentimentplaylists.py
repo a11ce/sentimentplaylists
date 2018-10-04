@@ -1,6 +1,9 @@
 import spotipy
 import spotipy.util as util
 import os
+from bs4 import BeautifulSoup
+import requests
+from tqdm import tqdm
 
 #this is me
 SPOTIFY_USERNAME = "oxa11ce"
@@ -16,6 +19,8 @@ SPOTIFY_SCOPE= "playlist-read-private"
 token = util.prompt_for_user_token(SPOTIFY_USERNAME,SPOTIFY_SCOPE)
 sp = spotipy.Spotify(token)
 
+GENIUS_TOKEN = os.environ.get("GENIUS_CLIENT_ACCESS_TOKEN", None)
+assert GENIUS_TOKEN is not None, "Must declare environment variable: GENIUS_CLIENT_ACCESS_TOKEN"
 
 
 def main():
@@ -24,6 +29,8 @@ def main():
     tracks = tracksInPlaylist(SPOTIFY_USERNAME, SPOTIFY_CORPUS_PLAYLIST)
     print(namesOfTracks(tracks))
     print(idsOfTracks(tracks))
+    print(lyricsOfTracks(tracks))
+    
         
     
 def tracksInPlaylist(user,playlist):
@@ -52,6 +59,37 @@ def idsOfTracks(tracks):
 
 def idOfTrack(track):
     return track['track']['id']
+
+def artistOfTrack(track):
+    return track['track']['artists'][0]['name']
+
+def lyricsOfTracks(tracks):
+    lyrics = []
+    for track in tqdm(tracks):
+        lyrics.append(lyricsOfTrack(nameOfTrack(track),artistOfTrack(track)))
+    return lyrics
+
+def lyricsOfTrack(trackName,artistName):
+    # from https://dev.to/willamesoares/how-to-integrate-spotify-and-genius-api-to-easily-crawl-song-lyrics-with-python-4o62
+    base_url = 'https://api.genius.com'
+    headers = {'Authorization': 'Bearer ' + GENIUS_TOKEN}
+    search_url = base_url + '/search'
+    data = {'q': trackName + ' ' + artistName}
+    response = requests.get(search_url, data=data, headers=headers)    
+    json = response.json()
+    remote_song_info = None    
+    for hit in json['response']['hits']:
+        if artistName.lower() in hit['result']['primary_artist']['name'].lower():
+            remote_song_info = hit
+            break
+    lyrics = None
+    if remote_song_info:
+        song_url = remote_song_info['result']['url']
+        page = requests.get(song_url)
+        html = BeautifulSoup(page.text, 'html.parser')
+        lyrics = html.find('div', class_='lyrics').get_text()
+        
+    return lyrics    
 
 if __name__ == "__main__":
     main()
