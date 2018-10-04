@@ -11,9 +11,9 @@ SPOTIFY_USERNAME = "oxa11ce"
 
 # UNCOMMENT THE LARGE PLAYLIST IF NOT TESTING
 #this a very large playlist (about 5k songs)
-#SPOTIFY_CORPUS_PLAYLIST = "spotify:user:oxa11ce:playlist:5mbCI94sPHLJssUO3t3fIf"
+SPOTIFY_CORPUS_PLAYLIST = "spotify:user:oxa11ce:playlist:5mbCI94sPHLJssUO3t3fIf"
 #this is a much smaller playlist for faster testing
-SPOTIFY_CORPUS_PLAYLIST = "spotify:user:oxa11ce:playlist:5PBI12H84cg9KIMc4SKfn1"
+#SPOTIFY_CORPUS_PLAYLIST = "spotify:user:oxa11ce:playlist:1G6d1MEK0ev9FETZ77vhtR"
 
 SPOTIFY_SCOPE= "playlist-read-private"
  # spotipy authorization
@@ -28,12 +28,13 @@ def main():
    
 
     tracks = tracksInPlaylist(SPOTIFY_USERNAME, SPOTIFY_CORPUS_PLAYLIST)
-    print(namesOfTracks(tracks))
+    # print(namesOfTracks(tracks))
     #print(idsOfTracks(tracks))
     polaritiesDict = trackNamesPolaritiesDict(tracks)
     #print(polaritiesDict)
-    print(averagePolarity(polaritiesDict))
-        
+    #print(averagePolarity(polaritiesDict))
+    for item in sortTrackNamesByPolarity(polaritiesDict):
+        print(item)
     
 def tracksInPlaylist(user,playlist):
     #spotify only gives 100 at a time, thanks ackleyrc
@@ -116,6 +117,11 @@ def averagePolarity(polarityDict):
             count = count + 1
             sum = sum + value
     return sum/count        
+
+def sortTrackNamesByPolarity(polarityDict):
+    #not sure when Nones should be removed 
+    polarityDict = {k: v for k, v in polarityDict.items() if v is not None}
+    return [(k, polarityDict[k]) for k in sorted(polarityDict, key=polarityDict.get)]
 
 if __name__ == "__main__":
     main()
